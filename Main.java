@@ -2,6 +2,9 @@
 import java.util.Scanner;
 public class Main 
 {
+
+    private static Object track;
+
     public static void main(String[] args)
     {
         Money_tracker track = new Money_tracker();
@@ -19,6 +22,9 @@ public class Main
                 System.out.print("Enter choice: ");
                 choice = scan.nextInt();
 
+                    track.load_file();
+                
+                
                 switch(choice)
                 {
                     case 1:
@@ -43,12 +49,21 @@ public class Main
 
                     case 5:
                     //Exiting and Saving to the File
-                    track.save_file();
-                    System.out.println("Thank you for using this system. BYE!");
+                    boolean check = track.check_balance();
+
+                    if(check)
+                    {
+                        System.out.println("\nThank you for using this system. BYE!\n");
+                        choice = 5;
+                    }
+                    else
+                    {
+                        choice = 0;
+                    }
                     break;
 
                     default:
-                    System.out.println("Invalid Input. Try Again.");
+                    System.out.println("\nInvalid Input. Try Again.");
                     break;
                 }
             } while(choice != 5);
