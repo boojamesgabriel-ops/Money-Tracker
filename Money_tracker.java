@@ -10,17 +10,20 @@ public class Money_tracker {
     
     private double gross_income = 0;
     private double amount = 0;
+
     Scanner scan = new Scanner(System.in);
+
     ArrayList<Transaction> transactions = new ArrayList<>(); 
 
     public void Menu() 
     {
-        System.out.println("\n==========Money Tracker==========");
-        System.out.println("1. Set Income");
-        System.out.println("2. Add Expense");
-        System.out.println("3. View Balance");
-        System.out.println("4. View Transaction History");
-        System.out.println("5. Exit");
+        System.out.println("\n==========Money Tracker============");
+        System.out.println("||1. Set Money to Allocate       ||");
+        System.out.println("||2. Add Expense                 ||");
+        System.out.println("||3. View Balance                ||");
+        System.out.println("||4. View Transaction History    ||");
+        System.out.println("||5. Exit                        ||");
+        System.out.println("===================================");
     }
 
     public void income()
@@ -30,7 +33,7 @@ public class Money_tracker {
         {
             while (true) 
             { 
-            System.out.println("\n==========SET GROSS INCOME=========");
+            System.out.println("\n========SET MONEY TO ALLOCATE=======");
                 System.out.print("Enter Gross Income: ");
                 if(scan.hasNextDouble())
                 {
@@ -52,6 +55,7 @@ public class Money_tracker {
                     scan.nextLine();
                 }
             }
+
             gross_income = amount;
             System.out.println("Gross Income of " + gross_income + " have been set successfully.");
         }
@@ -100,18 +104,23 @@ public class Money_tracker {
                 return;
             }
 
-        System.out.println("\n==========ALLOCATE EXPENSES==========");
+        System.out.println("\n==========ALLOCATE EXPENSES=========");
         do
         {
             do
             {
-                    System.out.print("Enter the amount of the Expense: ");
+                    System.out.print("Enter the amount: ");
 
                     if(scan.hasNextDouble())
                     {
                         amount = scan.nextDouble();
                         scan.nextLine();
-                        if(amount <= 0)
+                        if (gross_income == 0)
+                        {
+                            System.out.println("Your Balance has been Depleted.\n");
+                            return;
+                        }
+                        else if(amount <= 0)
                         {
                             System.out.println("The amount of the expense cannot be zero.");
                             valid = false;
@@ -124,7 +133,7 @@ public class Money_tracker {
                         }
                         else
                         {
-                            valid = true;
+                            valid = true;    
                         }
                     }
                     else
@@ -222,7 +231,9 @@ public class Money_tracker {
                 System.out.println(" ");
             }
         
-        }while(answer == 'y' || answer == 'Y');   
+        }while(answer == 'y' || answer == 'Y');
+
+        save_file();   
     }
 
     public void balance()
@@ -235,13 +246,13 @@ public class Money_tracker {
     public void track_sheet()
     {
         //Function for transaction tracking the allocation of expense
+        System.out.println("\n==========TRANSACTION HISTORY==========");
         if(transactions.isEmpty())
         {
             System.out.println("There is no history of Transactions yet.");
             return;
         }
 
-         System.out.println("\n==========TRANSACTION HISTORY==========");
         System.out.printf("%-12s %-10s %-10s %-15s %-30s%n", "Date", "Type", "Amount", "Category", "Description");
 
         for(Transaction t : transactions) 
@@ -253,14 +264,18 @@ public class Money_tracker {
             t.getAmount(),
             t.getCategory().name(),
             t.getDescription()
-        );
-    }
+            );
+        }
     }
 
     public void save_file()
     {
+        
         try(PrintWriter writer = new PrintWriter(new FileWriter("Transactions.txt")))
         {
+           writer.write(String.format("%-12s %-10s %-10s %-15s %s%n", 
+     "DATE", "TYPE", "AMOUNT", "CATEGORY", "DESCRIPTION"));
+
             for (Transaction track : transactions)
             {
                 writer.println(
@@ -268,11 +283,11 @@ public class Money_tracker {
                     track.getType() + " || " +
                     track.getAmount() + " || " +
                     track.getCategory().name() + " || " +
-                    track.getDescription()
+                    track.getDescription()  
                 );
             }
 
-            System.out.println("Saved to File Successfully.");
+            System.out.println("\nSaved to File Successfully.");
 
         }
         catch(Exception e)
@@ -284,11 +299,13 @@ public class Money_tracker {
     public void load_file()
     {
         File file = new File("Transactions.txt");
-
+        
         if(!file.exists())
         {
             return;
         }
+
+        transactions.clear();
 
         try(Scanner read = new Scanner(file))
         {
@@ -296,7 +313,12 @@ public class Money_tracker {
             {
                 String line = read.nextLine().trim();
 
-                if(!line.isEmpty())
+                if(line.isEmpty())
+                {
+                    continue;
+                }
+                
+                if(line.startsWith("DATE"))
                 {
                     continue;
                 }
@@ -304,22 +326,64 @@ public class Money_tracker {
                 String[] data = line.split(" \\|\\| ");
 
                 LocalDate date = LocalDate.parse(data[0]);
+
                 String type = data[1];
+
                 double amount = Double.parseDouble(data[2]);
-                Transaction.CATEGORY category = Transaction.CATEGORY.valueOf(data[3]);
+
+                Transaction.CATEGORY category = Transaction.CATEGORY.valueOf(data[3].toUpperCase());
+
                 String description = data[4];
 
                 Transaction track = new Transaction(amount, type, category, description);
                 transactions.add(track);
             }
-
-            System.out.println("Loaded data successfully.");
         }
 
         catch(Exception e)
         {
             System.out.println("Error loading file: " + e.getMessage());
         }
+    }
+
+    public boolean check_balance()
+    {
+
+
+        if (gross_income > 0)
+        {
+            char ch;
+
+            System.out.println("\nYou still have " + gross_income + " money left to allocate.");
+
+            while (true) 
+            { 
+                System.out.print("Are you sure you want to exit?(y/n): ");
+                String input = scan.nextLine();
+
+                if (input.isEmpty()) 
+                {
+                    System.out.println("Invalid Input. Please enter Y/N only.");
+                    continue;
+                }
+
+                ch = input.charAt(0);
+
+                if (ch == 'Y' || ch == 'y')
+                {
+                    return true;
+                }
+                else if (ch == 'N' || ch == 'n')
+                {
+                    return false;
+                }
+                else
+                {
+                    System.out.println("Invalid Input. Please enter Y/N only.");
+                }
+            }
+        }
+        return true;
     }
 
 
